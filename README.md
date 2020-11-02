@@ -191,7 +191,8 @@ import Photos
 
 class ShareViewController: SLComposeServiceViewController {
     // TODO: IMPORTANT: This should be your host app bundle identifier
-    let hostAppBundleIdentifier = "com.kasem.sharing"
+    let hostAppBundleIdentifier = "com.example.app"
+    
     let sharedKey = "ShareKey"
     var sharedMedia: [SharedMediaFile] = []
     var sharedText: [String] = []
@@ -279,14 +280,16 @@ class ShareViewController: SLComposeServiceViewController {
 
     private func handleImages (content: NSExtensionItem, attachment: NSItemProvider, index: Int) {
         attachment.loadItem(forTypeIdentifier: imageContentType, options: nil) { [weak self] data, error in
-
             if error == nil, let url = data as? URL, let this = self {
-
                 // Always copy
-                let fileName = this.getFileName(from: url, type: .image)
-                let newPath = FileManager.default
-                    .containerURL(forSecurityApplicationGroupIdentifier: "group.\(this.hostAppBundleIdentifier)")!
-                    .appendingPathComponent(fileName)
+                let fileName = this.getFileName(from: url, type: .image);
+                
+                let dir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.\(this.hostAppBundleIdentifier)")!;
+                let shareDir = dir.appendingPathComponent("share/" + UUID().uuidString);
+                try? FileManager.default.createDirectory(at: shareDir, withIntermediateDirectories: true, attributes: nil);
+                
+                let newPath = shareDir.appendingPathComponent(fileName);
+                
                 let copied = this.copyFile(at: url, to: newPath)
                 if(copied) {
                     this.sharedMedia.append(SharedMediaFile(path: newPath.absoluteString, thumbnail: nil, duration: nil, type: .image))
@@ -312,10 +315,14 @@ class ShareViewController: SLComposeServiceViewController {
             if error == nil, let url = data as? URL, let this = self {
 
                 // Always copy
-                let fileName = this.getFileName(from: url, type: .video)
-                let newPath = FileManager.default
-                    .containerURL(forSecurityApplicationGroupIdentifier: "group.\(this.hostAppBundleIdentifier)")!
-                    .appendingPathComponent(fileName)
+                let fileName = this.getFileName(from: url, type: .video);
+                
+                let dir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.\(this.hostAppBundleIdentifier)")!;
+                let shareDir = dir.appendingPathComponent("share/" + UUID().uuidString);
+                try? FileManager.default.createDirectory(at: shareDir, withIntermediateDirectories: true, attributes: nil);
+                
+                let newPath = shareDir.appendingPathComponent(fileName);
+                
                 let copied = this.copyFile(at: url, to: newPath)
                 if(copied) {
                     guard let sharedFile = this.getSharedMediaFile(forVideo: newPath) else {
@@ -339,32 +346,36 @@ class ShareViewController: SLComposeServiceViewController {
     }
 
     private func handleFiles (content: NSExtensionItem, attachment: NSItemProvider, index: Int) {
-        attachment.loadItem(forTypeIdentifier: fileURLType, options: nil) { [weak self] data, error in
+            attachment.loadItem(forTypeIdentifier: fileURLType, options: nil) { [weak self] data, error in
 
-            if error == nil, let url = data as? URL, let this = self {
+                if error == nil, let url = data as? URL, let this = self {
 
-                // Always copy
-                let fileName = this.getFileName(from :url, type: .file)
-                let newPath = FileManager.default
-                    .containerURL(forSecurityApplicationGroupIdentifier: "group.\(this.hostAppBundleIdentifier)")!
-                    .appendingPathComponent(fileName)
-                let copied = this.copyFile(at: url, to: newPath)
-                if (copied) {
-                    this.sharedMedia.append(SharedMediaFile(path: newPath.absoluteString, thumbnail: nil, duration: nil, type: .file))
+                    // Always copy
+                    let fileName = this.getFileName(from :url, type: .file);
+                    
+                    let dir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.\(this.hostAppBundleIdentifier)")!;
+                    let shareDir = dir.appendingPathComponent("share/" + UUID().uuidString);
+                    try? FileManager.default.createDirectory(at: shareDir, withIntermediateDirectories: true, attributes: nil);
+                    
+                    let newPath = shareDir.appendingPathComponent(fileName);
+                    
+                    let copied = this.copyFile(at: url, to: newPath)
+                    if (copied) {
+                        this.sharedMedia.append(SharedMediaFile(path: newPath.absoluteString, thumbnail: nil, duration: nil, type: .file))
+                    }
+
+                    if index == (content.attachments?.count)! - 1 {
+                        let userDefaults = UserDefaults(suiteName: "group.\(this.hostAppBundleIdentifier)")
+                        userDefaults?.set(this.toData(data: this.sharedMedia), forKey: this.sharedKey)
+                        userDefaults?.synchronize()
+                        this.redirectToHostApp(type: .file)
+                    }
+
+                } else {
+                    self?.dismissWithError()
                 }
-
-                if index == (content.attachments?.count)! - 1 {
-                    let userDefaults = UserDefaults(suiteName: "group.\(this.hostAppBundleIdentifier)")
-                    userDefaults?.set(this.toData(data: this.sharedMedia), forKey: this.sharedKey)
-                    userDefaults?.synchronize()
-                    this.redirectToHostApp(type: .file)
-                }
-
-            } else {
-                self?.dismissWithError()
             }
         }
-    }
 
     private func dismissWithError() {
         print("[ERROR] Error loading data!")
@@ -426,7 +437,7 @@ class ShareViewController: SLComposeServiceViewController {
             name = UUID().uuidString + "." + getExtension(from: url, type: type)
         }
 
-        return name
+        return name;
     }
 
     func copyFile(at srcURL: URL, to dstURL: URL) -> Bool {
