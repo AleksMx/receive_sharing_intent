@@ -88,12 +88,12 @@ public class SwiftReceiveSharingIntentPlugin: NSObject, FlutterPlugin, FlutterSt
                         }
                         if $0.type == .video, $0.thumbnail != nil {
                             let thumbnail = getAbsolutePath(for: $0.thumbnail!)
-                            return SharedMediaFile(path: path, thumbnail: thumbnail, duration: $0.duration, type: $0.type)
+                            return SharedMediaFile(path: path, thumbnail: thumbnail, duration: $0.duration, realname: $0.realname, type: $0.type)
                         } else if $0.type == .video, $0.thumbnail == nil {
-                            return SharedMediaFile(path: path, thumbnail: nil, duration: $0.duration, type: $0.type)
+                            return SharedMediaFile(path: path, thumbnail: nil, duration: $0.duration, realname: $0.realname, type: $0.type)
                         }
 
-                        return SharedMediaFile(path: path, thumbnail: nil, duration: $0.duration, type: $0.type)
+                        return SharedMediaFile(path: path, thumbnail: nil, duration: $0.duration, realname: $0.realname, type: $0.type)
                     }
                     latestMedia = sharedMediaFiles
                     if setInitialData {
@@ -110,7 +110,7 @@ public class SwiftReceiveSharingIntentPlugin: NSObject, FlutterPlugin, FlutterSt
                         guard let path = getAbsolutePath(for: $0.path) else {
                             return nil
                         }
-                        return SharedMediaFile(path: path, thumbnail: nil, duration: nil, type: $0.type)
+                        return SharedMediaFile(path: path, thumbnail: nil, duration: nil, realname: $0.realname, type: $0.type)
                     }
                     latestMedia = sharedMediaFiles
                     if setInitialData {
@@ -208,14 +208,16 @@ public class SwiftReceiveSharingIntentPlugin: NSObject, FlutterPlugin, FlutterSt
     class SharedMediaFile: Codable {
         var path: String
         var thumbnail: String? // video thumbnail
+        var realname: String;
         var duration: Double? // video duration in milliseconds
         var type: SharedMediaType
 
-        init(path: String, thumbnail: String?, duration: Double?, type: SharedMediaType) {
-            self.path = path
-            self.thumbnail = thumbnail
-            self.duration = duration
-            self.type = type
+        init(path: String, thumbnail: String?, duration: Double?, realname: String, type: SharedMediaType) {
+            self.path = path;
+            self.thumbnail = thumbnail;
+            self.duration = duration;
+            self.realname = realname;
+            self.type = type;
         }
     }
 

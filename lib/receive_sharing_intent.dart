@@ -146,6 +146,8 @@ class SharedMediaFile {
   /// NOTE. for iOS only the file is always copied
   final String path;
 
+  final String realname;
+
   /// Video thumbnail
   final String thumbnail;
 
@@ -155,12 +157,13 @@ class SharedMediaFile {
   /// Whether its a video or image
   final SharedMediaType type;
 
-  SharedMediaFile(this.path, this.thumbnail, this.duration, this.type);
+  SharedMediaFile(this.path, this.thumbnail, this.duration, this.realname, this.type);
 
   SharedMediaFile.fromJson(Map<String, dynamic> json)
       : path = json['path'],
         thumbnail = json['thumbnail'],
         duration = json['duration'],
+        realname = json['realname'],
         type = SharedMediaType.values[json['type']];
 }
 
